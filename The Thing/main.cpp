@@ -9,7 +9,7 @@ using namespace sf;
 
 const int windowSize_x = 1000;
 const int windowSize_y = 500;
-const int groundOffset = windowSize_y - 150.f;
+const int groundOffset = windowSize_y - 100.f;
 int gameSpeed = 8;
 bool playerDead = false;
 bool playDeadSound = false;
