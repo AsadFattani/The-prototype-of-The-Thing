@@ -1,0 +1,6 @@
+# Ignore all .exe files
+*.exe
+
+# Ignore the DoNotChange.cpp file
+DoNotChange.cpp
+
