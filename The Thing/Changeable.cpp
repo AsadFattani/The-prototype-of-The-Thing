@@ -51,7 +51,7 @@ public:
     }
 
 };
-
+/*
 class SoundManager
 {
 public:
@@ -73,6 +73,7 @@ public:
         pointSound.setBuffer(pointBuffer);
     }
 };
+*/
 
 class Ground
 {
@@ -181,7 +182,7 @@ public:
         obstacles.clear();
     }
 };
-
+/*
 class Dino
 {
 public:
@@ -275,7 +276,7 @@ public:
     }
 
 };
-
+*/
 class Scores
 {
 public:
@@ -283,14 +284,14 @@ public:
     Text HIText;
     Text scoresText;
     Font scoresFont;
-    SoundManager soundManager;
+//    SoundManager soundManager;
     short scores{ 0 };
     short previousScore{ 0 };
     short scoresIndex{ 0 };
     short scoresDiff{ 0 };
     short scoresInital;
 
-    Scores() : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundManager()
+    Scores() : scoresFont(), scoresText(), previousScoreText(), scoresInital() /* soundManager() */
     {
         if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
             scoresText.setFont(scoresFont);
@@ -324,7 +325,7 @@ public:
             if (scoresDiff > 100) {
                 scoresInital += 100;
                 gameSpeed += 1;
-                soundManager.pointSound.play();
+                //soundManager.pointSound.play();
             }
 
             scoresText.setString(to_string(scores));
@@ -413,7 +414,7 @@ class GameState
 {
 public:
     Fps fps;
-    Dino dino;
+//    Dino dino;
     Ground ground;
     Obstacles obstacles;
     Scores scores;
@@ -423,11 +424,11 @@ public:
     Text gameOverText;
     Vector2f mousePos{ 0.f, 0.f };
 
-    GameState() : fps(), dino(), ground(), obstacles(), scores(), clouds(), gameOverFont(), gameOverText()
+    GameState() : fps(), /*dino(),*/ ground(), obstacles(), scores(), clouds(), gameOverFont(), gameOverText()
     {
         gameOverFont.loadFromFile("rsrc/Fonts/Font.ttf");
         gameOverText.setFont(gameOverFont);
-        dino.dino.setPosition(Vector2f(windowSize_x / 2 - windowSize_x / 4, windowSize_y - 150.f));
+//        dino.dino.setPosition(Vector2f(windowSize_x / 2 - windowSize_x / 4, windowSize_y - 150.f));
         gameOverText.setString("Game Over");
         gameOverText.setPosition(Vector2f(restartButton.restartButtonSprite.getPosition().x - gameOverText.getCharacterSize(),
             restartButton.restartButtonSprite.getPosition().y - 50));
@@ -447,7 +448,7 @@ public:
         {
             ground.reset();
             obstacles.reset();
-            dino.reset();
+//            dino.reset();
             scores.reset();
             playerDead = false;
             gameSpeed = 8;
@@ -456,7 +457,7 @@ public:
         {
             ground.updateGround();
             obstacles.update(deltaTime);
-            dino.update(deltaTime, obstacles.obstacles);
+//            dino.update(deltaTime, obstacles.obstacles);
             clouds.updateClouds(deltaTime);
             scores.update();
         }
@@ -471,7 +472,7 @@ public:
         window.draw(scores.scoresText);
         window.draw(scores.previousScoreText);
         window.draw(scores.HIText);
-        window.draw(dino.dino);
+//        window.draw(dino.dino);
 
         if (playerDead)
         {
@@ -504,9 +505,10 @@ int main() {
 
         window.clear(Color::White);
         game.clouds.drawTo(window);
+        
         window.draw(game.ground.groundSprite);
         game.obstacles.drawTo(window);
-        window.draw(game.dino.dino);
+//        window.draw(game.dino.dino);
         game.scores.update();
         window.draw(game.scores.scoresText);
         window.draw(game.scores.previousScoreText);
