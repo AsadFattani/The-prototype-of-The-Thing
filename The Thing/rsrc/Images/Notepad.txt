@@ -1,3 +1,0 @@
-PlayerSpriteSheet : 90 * 100
-Bird spritesheet : 90 * 80
-
