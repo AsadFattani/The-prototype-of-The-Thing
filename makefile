@@ -1,3 +1,3 @@
 all:
-	g++ DoNotChange.cpp -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+	g++ Changeable.cpp -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 	
