@@ -7,13 +7,14 @@
 using namespace std;
 using namespace sf;
 
-const unsigned int windowSize_x = 1000;
-const unsigned int windowSize_y = 500;
-const unsigned int groundOffset = windowSize_y - 150.f;
+const int windowSize_x = 1000;
+const int windowSize_y = 500;
+const int groundOffset = windowSize_y - 150.f;
 int gameSpeed = 8;
 bool playerDead = false;
 bool playDeadSound = false;
 
+/*
 struct Fps_s
 {
     Font font;
@@ -25,32 +26,34 @@ struct Fps_s
 
 class Fps
 {
-    Fps_s fps;
+    Fps_s FPS;
 public:
-    Fps() : fps() {
-        if (fps.font.loadFromFile("rsrc/Fonts/font.ttf")) {
-            fps.text.setFont(fps.font);
+    Fps() : FPS() {
+        if (FPS.font.loadFromFile("rsrc/Fonts/font.ttf")) {
+            FPS.text.setFont(FPS.font);
         }
-        fps.text.setCharacterSize(15);
-        fps.text.setPosition(Vector2f(fps.text.getCharacterSize() + 10.f, fps.text.getCharacterSize()));
-        fps.text.setFillColor(Color(83, 83, 83));
+        FPS.text.setCharacterSize(15);
+        FPS.text.setPosition(Vector2f(FPS.text.getCharacterSize() + 10.f, FPS.text.getCharacterSize()));
+        FPS.text.setFillColor(Color(83, 83, 83));
     }
     void update()
     {
-        if (fps.clock.getElapsedTime().asSeconds() >= 1.f) {
-            fps.fps = fps.Frame;
-            fps.Frame = 0;
-            fps.clock.restart();
+        if (FPS.clock.getElapsedTime().asSeconds() >= 1.f) {
+            FPS.fps = FPS.Frame;
+            FPS.Frame = 0;
+            FPS.clock.restart();
         }
-        fps.Frame++;
-        fps.text.setString("FPS :- " + to_string(fps.fps));
+        FPS.Frame++;
+        FPS.text.setString("FPS :- " + to_string(FPS.fps));
     }
     void drawTo(RenderWindow& window)
     {
-        window.draw(fps.text);
+        window.draw(FPS.text);
     }
 
 };
+*/
+
 
 class SoundManager
 {
@@ -61,19 +64,30 @@ public:
     Sound dieSound;
     Sound jumpSound;
     Sound pointSound;
+    Music backgroundMusic;
 
-    SoundManager()
-        : dieBuffer(), jumpBuffer(), pointBuffer(), dieSound(), jumpSound(), pointSound()
+    SoundManager() : dieBuffer(), jumpBuffer(), pointBuffer(), dieSound(), jumpSound(), pointSound()
     {
         dieBuffer.loadFromFile("rsrc/Sounds/die.wav");
         jumpBuffer.loadFromFile("rsrc/Sounds/jump.wav");
         pointBuffer.loadFromFile("rsrc/Sounds/point.wav");
+        backgroundMusic.openFromFile("rsrc/Sounds/background.ogg");
 
         dieSound.setBuffer(dieBuffer);
         jumpSound.setBuffer(jumpBuffer);
         pointSound.setBuffer(pointBuffer);
+        backgroundMusic.setLoop(true);
+        backgroundMusic.setVolume(50.f);
+        backgroundMusic.play();
+    }
+
+    void restartMusic()
+    {
+        backgroundMusic.stop();
+        backgroundMusic.play();
     }
 };
+
 
 class Ground
 {
@@ -81,8 +95,7 @@ public:
     Sprite groundSprite;
     Texture groundTexture;
     int offset = 0;
-    Ground()
-        : groundSprite(), groundTexture()
+    Ground() : groundSprite(), groundTexture()
     {
         if (groundTexture.loadFromFile("rsrc/Images/GroundImage.png")) {
             groundSprite.setTexture(groundTexture);
@@ -115,7 +128,8 @@ class Obstacle
 {
 public:
     Sprite obstacleSprite;
-    FloatRect obstacleBounds{ 0.f, 0.f, 0.f, 0.f };
+    FloatRect obstacleBounds{0.f, 0.f, 0.f, 0.f};
+
     Obstacle(Texture& texture) : obstacleSprite(), obstacleBounds() {
         obstacleSprite.setTexture(texture);
         obstacleSprite.setPosition(Vector2f(windowSize_x, groundOffset));
@@ -125,35 +139,30 @@ public:
 class Obstacles
 {
 public:
-    vector<Obstacle> obstacles;
+    vector <Obstacle> obstacles;
 
     Time spawnTimer;
     Texture obstacleTexture_1;
     Texture obstacleTexture_2;
-    Texture obstacleTexture_3;
     int randomNumber = 0;
 
-    Obstacles()
-        : spawnTimer(Time::Zero)
+    Obstacles() : spawnTimer(Time::Zero)
     {
-        obstacles.reserve(5);
+        obstacles.reserve(3);
 
         obstacleTexture_1.loadFromFile("rsrc/Images/Cactus1.png");
         obstacleTexture_2.loadFromFile("rsrc/Images/Cactus2.png");
-        obstacleTexture_3.loadFromFile("rsrc/Images/Cactus3.png");
     }
 
     void update(Time& deltaTime)
     {
         spawnTimer += deltaTime;
-        if (spawnTimer.asSeconds() > 0.5f + gameSpeed / 8) {
-            randomNumber = (rand() % 3) + 1;
+        if (spawnTimer.asSeconds() > 0.5f + gameSpeed / 8){
+            randomNumber = (rand() % 2) + 1;
             if (randomNumber == 1)
                 obstacles.emplace_back(Obstacle(obstacleTexture_1));
             else if (randomNumber == 2)
                 obstacles.emplace_back(Obstacle(obstacleTexture_2));
-            else
-                obstacles.emplace_back(Obstacle(obstacleTexture_3));
 
             spawnTimer = Time::Zero;
         }
@@ -162,10 +171,10 @@ public:
             for (int i = 0; i < obstacles.size(); i++) {
                 obstacles[i].obstacleBounds = obstacles[i].obstacleSprite.getGlobalBounds();
                 obstacles[i].obstacleBounds.width -= 10.f;
-                obstacles[i].obstacleSprite.move(-1 * gameSpeed, 0.f);
+                obstacles[i].obstacleSprite.move(-gameSpeed, 0.f);
                 if (obstacles[i].obstacleSprite.getPosition().x < -150.f) {
                     obstacles.erase(obstacles.begin() + i);
-                    --i;
+                    i--;
                 }
             }
         }
@@ -180,43 +189,50 @@ public:
 
     void reset()
     {
-        obstacles.erase(obstacles.begin(), obstacles.end());
+        obstacles.clear();
     }
 };
 
 class Dino
 {
-public:
-    Sprite dino;
-    Vector2f dinoPos{ 0.f, 0.f };
-    Vector2f dinoMotion{ 0.f, 0.f };
-    Texture dinoTex;
-    FloatRect dinoBounds;
-    SoundManager soundManager;
-    array<IntRect, 6> frames;
-    Time timeTracker;
-    int animationCounter{ 0 };
+    public:
+        Sprite dino;
+        Vector2f dinoPos{ 0.f, 0.f };
+        Vector2f dinoMotion{ 0.f, 0.f };
+        Texture dinoTex;
+        FloatRect dinoBounds;
+        SoundManager& soundM;
+        array <IntRect, 6> frames;
+        Time timeTracker;
+        int animationCounter{ 0 };
+        RectangleShape Box;
 
-    Dino() : dino(), dinoTex(), soundManager(), timeTracker()
-    {
-        if (dinoTex.loadFromFile("rsrc/Images/PlayerSpriteSheet.png")) {
-            dino.setTexture(dinoTex);
-            for (int i = 0; i < frames.size(); i++)
-                frames[i] = IntRect(i * 90, 0, 90, 95);
-            dino.setTextureRect(frames[0]);
-            dinoPos = dino.getPosition();
+        Dino(SoundManager& sm) : dino(), dinoTex(), timeTracker(), soundM(sm)
+        {
+            float spriteWidth = 47;
+                float spriteHeight = 56;
+                if (dinoTex.loadFromFile("rsrc/Images/DinoWithDress.png")) {
+                    dino.setTexture(dinoTex);
+                    for (int i = 0; i < frames.size(); i++)
+                        frames[i] = IntRect(i * spriteWidth, 0, spriteWidth, spriteHeight);
+                    dino.setTextureRect(frames[0]);
+                    dinoPos = dino.getPosition();
         }
         else {
-            cout << "Error loading the PlayerSprite texture" << endl;
+            cout << "Error loading the Dino Texture" << endl;
         }
     }
 
     void update(Time& deltaTime, vector<Obstacle>& obstacles)
     {
+        updateBox();
+        dino.setScale(2.f,2.f);
         dinoPos = dino.getPosition();
         dinoBounds = dino.getGlobalBounds();
-        dinoBounds.height -= 15.f;
+        dinoBounds.height -= 18.f;
         dinoBounds.width -= 10.f;
+        dinoBounds.left += 4.f;
+
         timeTracker += deltaTime;
 
         for (auto& obs : obstacles)
@@ -228,17 +244,24 @@ public:
             if (Keyboard::isKeyPressed(Keyboard::Space) && dinoPos.y >= windowSize_y - 150.f) {
                 animationCounter = 0;
                 dinoMotion.y = -20.f;
-                dino.setTextureRect(frames[1]);
-                soundManager.jumpSound.play();
+                dino.setTextureRect(frames[2]);
+                soundM.jumpSound.play();
             }
 
-            if (dinoPos.y < windowSize_y - 150.f) {
+            if (dinoPos.y < windowSize_y - 275.f) {
                 dinoMotion.y += 1.f;
-                dino.setTextureRect(frames[1]);
+                dino.setTextureRect(frames[3]);
             }
+
+            if (dinoPos.y < windowSize_y - 150.f && dinoPos.y > windowSize_y - 275.f) {
+                dinoMotion.y += 1.f;
+                dino.setTextureRect(frames[2]);
+            }
+
 
             if (dinoPos.y > windowSize_y - 150.f) {
                 dino.setPosition(Vector2f(dino.getPosition().x, windowSize_y - 150.f));
+                dino.setTextureRect(frames[1]);
                 dinoMotion.y = 0.f;
             }
 
@@ -246,28 +269,30 @@ public:
         }
         else {
             dinoMotion.y = 0.f;
-            dino.setTextureRect(frames[3]);
-            if (timeTracker.asMilliseconds() > 170.f) {
-                soundManager.dieSound.stop();
-                soundManager.dieSound.setLoop(false);
+            dino.setTextureRect(frames[4]);
+            if (timeTracker.asSeconds() > 0.3f) {
+                soundM.dieSound.stop();
+                soundM.dieSound.setLoop(false);
                 timeTracker = Time::Zero;
             }
             else {
-                soundManager.dieSound.play();
+                soundM.dieSound.play();
             }
         }
     }
 
     void walk()
     {
-        for (int i = 0; i < frames.size() - 3; i++)
-            if (animationCounter == i * 3)
-                dino.setTextureRect(frames[i]);
+        if(animationCounter < 6)
+            dino.setTextureRect(frames[0]);
+        else
+            dino.setTextureRect(frames[1]);
+            
+        animationCounter++;
 
-        if (animationCounter >= (frames.size() - 2) * 3)
+        if (animationCounter >= 12)
             animationCounter = 0;
 
-        animationCounter++;
     }
     void reset()
     {
@@ -276,7 +301,21 @@ public:
         dino.setTextureRect(frames[0]);
     }
 
+    void updateBox()
+    {
+        Box.setSize(Vector2f(dinoBounds.width, dinoBounds.height));
+        Box.setFillColor(Color::Transparent);
+        Box.setOutlineColor(Color(255, 0, 0));
+        Box.setOutlineThickness(2.f);
+        Box.setPosition(Vector2f(dinoBounds.left, dinoBounds.top));
+    }
+        
+    void drawBox(RenderWindow& window)
+    {
+        window.draw(Box);
+    }
 };
+
 
 class Scores
 {
@@ -285,14 +324,14 @@ public:
     Text HIText;
     Text scoresText;
     Font scoresFont;
-    SoundManager soundManager;
+    SoundManager& soundM;
     short scores{ 0 };
     short previousScore{ 0 };
     short scoresIndex{ 0 };
     short scoresDiff{ 0 };
     short scoresInital;
 
-    Scores() : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundManager()
+    Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
     {
         if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
             scoresText.setFont(scoresFont);
@@ -326,7 +365,7 @@ public:
             if (scoresDiff > 100) {
                 scoresInital += 100;
                 gameSpeed += 1;
-                soundManager.pointSound.play();
+                soundM.pointSound.play();
             }
 
             scoresText.setString(to_string(scores));
@@ -363,7 +402,6 @@ public:
         }
     }
 };
-
 
 
 class Clouds
@@ -416,18 +454,19 @@ public:
 class GameState
 {
 public:
-    Fps fps;
+//    Fps fps;
     Dino dino;
     Ground ground;
     Obstacles obstacles;
     Scores scores;
     Clouds clouds;
     RestartButton restartButton;
+    SoundManager soundManager;
     Font gameOverFont;
     Text gameOverText;
     Vector2f mousePos{ 0.f, 0.f };
 
-    GameState() : fps(), dino(), ground(), obstacles(), scores(), clouds(), gameOverFont(), gameOverText()
+    GameState() : /*fps(),*/ dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager()
     {
         gameOverFont.loadFromFile("rsrc/Fonts/Font.ttf");
         gameOverText.setFont(gameOverFont);
@@ -452,6 +491,7 @@ public:
             ground.reset();
             obstacles.reset();
             dino.reset();
+            soundManager.restartMusic();
             scores.reset();
             playerDead = false;
             gameSpeed = 8;
@@ -464,7 +504,7 @@ public:
             clouds.updateClouds(deltaTime);
             scores.update();
         }
-        fps.update();
+//        fps.update();
     }
 
     void drawTo(RenderWindow& window)
@@ -483,7 +523,7 @@ public:
             window.draw(restartButton.restartButtonSprite);
         }
 
-        fps.drawTo(window);
+//        fps.drawTo(window);
     }
 
 };
@@ -508,6 +548,7 @@ int main() {
 
         window.clear(Color::White);
         game.clouds.drawTo(window);
+        
         window.draw(game.ground.groundSprite);
         game.obstacles.drawTo(window);
         window.draw(game.dino.dino);
@@ -515,13 +556,14 @@ int main() {
         window.draw(game.scores.scoresText);
         window.draw(game.scores.previousScoreText);
         window.draw(game.scores.HIText);
+        game.dino.drawBox(window);
 
         if (playerDead) {
             window.draw(game.restartButton.restartButtonSprite);
             window.draw(game.gameOverText);
         }
 
-        game.fps.drawTo(window);
+//        game.fps.drawTo(window);
         window.display();
     }
 
