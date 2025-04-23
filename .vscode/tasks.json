@@ -7,7 +7,7 @@
         "command": "cmd.exe",
         "args": [
           "/c",
-          "g++ Changeable.cpp -o sfml-app -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-system && sfml-app.exe"
+          "g++ DoNotChange.cpp -o sfml-app -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-system && sfml-app.exe"
         ],
         "options": {
           "cwd": "${workspaceFolder}"

@@ -248,12 +248,12 @@ class Dino
                 soundM.jumpSound.play();
             }
 
-            if (dinoPos.y < windowSize_y - 275.f) {
+            if (dinoPos.y < windowSize_y - 290.f) {
                 dinoMotion.y += 1.f;
                 dino.setTextureRect(frames[3]);
             }
 
-            if (dinoPos.y < windowSize_y - 150.f && dinoPos.y > windowSize_y - 275.f) {
+            if (dinoPos.y < windowSize_y - 150.f && dinoPos.y > windowSize_y - 290.f) {
                 dinoMotion.y += 1.f;
                 dino.setTextureRect(frames[2]);
             }
@@ -472,7 +472,7 @@ public:
         gameOverText.setFont(gameOverFont);
         dino.dino.setPosition(Vector2f(windowSize_x / 2 - windowSize_x / 4, windowSize_y - 150.f));
         gameOverText.setString("Game Over");
-        gameOverText.setPosition(Vector2f(restartButton.restartButtonSprite.getPosition().x - gameOverText.getCharacterSize(),
+        gameOverText.setPosition(Vector2f(restartButton.restartButtonSprite.getPosition().x - 100.f,
             restartButton.restartButtonSprite.getPosition().y - 50));
         gameOverText.setFillColor(Color(83, 83, 83));
     }
@@ -486,7 +486,7 @@ public:
     {
         restartButton.checkPressed = Mouse::isButtonPressed(Mouse::Left);
         if (playerDead && restartButton.restartButtonSpriteBounds.contains(mousePos) &&
-            restartButton.checkPressed)
+            restartButton.checkPressed || (playerDead && Keyboard::isKeyPressed(Keyboard::R)))
         {
             ground.reset();
             obstacles.reset();

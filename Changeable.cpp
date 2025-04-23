@@ -188,7 +188,6 @@ public:
             if (scoresDiff > 100) {
                 scoresInital += 100;
                 gameSpeed += 1;
-                //soundManager.pointSound.play();
             }
 
             scoresText.setString(to_string(scores));
@@ -305,7 +304,7 @@ public:
     {
         restartButton.checkPressed = Mouse::isButtonPressed(Mouse::Left);
         if (playerDead && restartButton.restartButtonSpriteBounds.contains(mousePos) &&
-            restartButton.checkPressed)
+            restartButton.checkPressed || (playerDead && Keyboard::isKeyPressed(Keyboard::R)))
         {
             ground.reset();
             obstacles.reset();
