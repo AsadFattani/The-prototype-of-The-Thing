@@ -540,13 +540,14 @@ int main() {
         Event event;
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed)
-                window.close();
+            window.close();
         }
-
+        
         game.setMousePos(Mouse::getPosition(window));
         game.update(deltaTime);
-
+        
         window.clear(Color::White);
+        game.dino.drawBox(window);
         game.clouds.drawTo(window);
         
         window.draw(game.ground.groundSprite);
@@ -556,12 +557,8 @@ int main() {
         window.draw(game.scores.scoresText);
         window.draw(game.scores.previousScoreText);
         window.draw(game.scores.HIText);
-        game.dino.drawBox(window);
 
-        if (playerDead) {
-            window.draw(game.restartButton.restartButtonSprite);
-            window.draw(game.gameOverText);
-        }
+        game.drawTo(window);
 
 //        game.fps.drawTo(window);
         window.display();
