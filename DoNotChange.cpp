@@ -540,13 +540,14 @@ int main() {
         Event event;
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed)
-                window.close();
+            window.close();
         }
-
+        
         game.setMousePos(Mouse::getPosition(window));
         game.update(deltaTime);
-
+        
         window.clear(Color::White);
+        game.dino.drawBox(window);
         game.clouds.drawTo(window);
         
         window.draw(game.ground.groundSprite);

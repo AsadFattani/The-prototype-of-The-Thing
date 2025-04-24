@@ -115,6 +115,7 @@ public:
             groundSprite.setTextureRect(IntRect(offset, 0, windowSize_x, windowSize_y));
         }
     }
+
     void reset()
     {
         offset = 0;
@@ -393,7 +394,7 @@ public:
     short scoresDiff{ 0 };
     short scoresInital;
 
-    Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
+    Scores() : scoresFont(), scoresText(), previousScoreText(), scoresInital()
     {
         if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
             scoresText.setFont(scoresFont);
@@ -469,49 +470,45 @@ public:
 class Clouds
 {
 public:
-    vector<Sprite> clouds;
-    Time currTime;
+    Sprite cloud;
     Texture cloudTexture;
+    Time currTime;
+    float speed;
 
-    Clouds() : cloudTexture(), clouds(), currTime()
+    Clouds()
     {
-        cloudTexture.loadFromFile("rsrc/Images/Clouds.png");
-        clouds.reserve(4);
-        clouds.emplace_back(Sprite(cloudTexture));
-        clouds.back().setPosition(Vector2f(windowSize_x, windowSize_y / 2 - 40.f));
+        if (!cloudTexture.loadFromFile("rsrc/Images/Clouds.png")) {
+            throw "Could not load cloud texture";
+        }
+
+        cloud.setTexture(cloudTexture);
+        cloud.setPosition(Vector2f(windowSize_x, windowSize_y / 2.f - 40.f));
     }
 
     void updateClouds(Time& deltaTime)
     {
         currTime += deltaTime;
-        if (currTime.asSeconds() > 8.f) {
-            clouds.emplace_back(Sprite(cloudTexture));
+
+        if(!playerDead)
+            speed = -1.f;
+        else
+            speed = -0.5f;
+
+        cloud.move(Vector2f(speed, 0.f));
+
+        if (cloud.getPosition().x < -cloudTexture.getSize().x) {
             int randomY = rand() % ((windowSize_y / 2 - 50) - (windowSize_y / 2 - 200) + 1) + (windowSize_y / 2 - 200);
-            clouds.back().setPosition(Vector2f(windowSize_x, randomY));
-            currTime = Time::Zero;
-        }
-
-        for (int i = 0; i < clouds.size(); i++) {
-            if (!playerDead)
-                clouds[i].move(Vector2f(-1.f, 0.f));
-            else
-                clouds[i].move(Vector2f(-0.5f, 0.f));
-
-            if (clouds[i].getPosition().x < 0.f - cloudTexture.getSize().x) {
-                clouds.erase(clouds.begin() + i);
-                --i;
-            }
+            cloud.setPosition(Vector2f(windowSize_x, randomY));
         }
     }
 
     void drawTo(RenderWindow& window)
     {
-        for (auto& clouds : clouds) {
-            window.draw(clouds);
-        }
+        window.draw(cloud);
     }
-
 };
+
+
 
 class GameState
 {
@@ -583,7 +580,7 @@ int main() {
         Time deltaTime = deltaClock.restart();
         Event event;
         while (window.pollEvent(event)) {
-            if (event.type == Event::Closed)
+            if (event.type == Event::Closed || Keyboard::isKeyPressed(Keyboard::Escape))
                 window.close();
         }
 
@@ -602,11 +599,7 @@ int main() {
         window.draw(game.scores.HIText);
         game.fps.drawTo(window);
 
-        if (playerDead)
-        {
-            window.draw(game.gameOverText);
-            window.draw(game.restartButton.restartButtonSprite);
-        }
+        game.drawTo(window);
 
         window.display();
     }
