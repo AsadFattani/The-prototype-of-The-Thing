@@ -13,7 +13,9 @@ const int groundOffset = windowSize_y - 150.f;
 int gameSpeed = 8;
 bool playerDead = false;
 bool playDeadSound = false;
-
+bool paused = false; // New variable to track pause state
+Font pauseFont;       // Font for the pause text
+Text pauseText;       // Text to display when paused
 
 struct Fps_s
 {
@@ -418,7 +420,7 @@ public:
 
     void update()
     {
-        if (!playerDead) {
+        if (!playerDead && !paused) { // Stop updating scores when paused
             scoresIndex++;
             if (scoresIndex >= 5) {
                 scoresIndex = 0;
@@ -576,30 +578,44 @@ int main() {
     GameState game;
     Clock deltaClock;
 
+    // Load font and set up pause text
+    if (pauseFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
+        pauseText.setFont(pauseFont);
+        pauseText.setString("Paused");
+        pauseText.setCharacterSize(30);
+        pauseText.setFillColor(Color(83, 83, 83));
+        pauseText.setPosition(Vector2f(windowSize_x / 2 - pauseText.getGlobalBounds().width / 2, windowSize_y / 2 - 50));
+    }
+
     while (window.isOpen()) {
         Time deltaTime = deltaClock.restart();
         Event event;
         while (window.pollEvent(event)) {
-            if (event.type == Event::Closed || Keyboard::isKeyPressed(Keyboard::Escape))
+            if (event.type == Event::Closed)
                 window.close();
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape) {
+                paused = !paused; // Toggle pause state
+            }
         }
 
-        game.setMousePos(Mouse::getPosition(window));
-        game.update(deltaTime);
+        if (!paused) { // Only update the game if not paused
+            game.setMousePos(Mouse::getPosition(window));
+            game.update(deltaTime);
+        }
 
         window.clear(Color::White);
         game.clouds.drawTo(window);
-        
         window.draw(game.ground.groundSprite);
         game.obstacles.drawTo(window);
         window.draw(game.dino.dino);
-        game.scores.update();
         window.draw(game.scores.scoresText);
         window.draw(game.scores.previousScoreText);
         window.draw(game.scores.HIText);
         game.fps.drawTo(window);
 
-//        game.drawTo(window);
+        if (paused) {
+            window.draw(pauseText); // Draw the pause text when paused
+        }
 
         window.display();
     }
