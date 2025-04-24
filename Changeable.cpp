@@ -394,7 +394,7 @@ public:
     short scoresDiff{ 0 };
     short scoresInital;
 
-    Scores() : scoresFont(), scoresText(), previousScoreText(), scoresInital()
+    Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
     {
         if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
             scoresText.setFont(scoresFont);
@@ -599,7 +599,7 @@ int main() {
         window.draw(game.scores.HIText);
         game.fps.drawTo(window);
 
-        game.drawTo(window);
+//        game.drawTo(window);
 
         window.display();
     }
