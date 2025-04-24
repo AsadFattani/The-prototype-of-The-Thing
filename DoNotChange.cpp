@@ -14,7 +14,7 @@ int gameSpeed = 8;
 bool playerDead = false;
 bool playDeadSound = false;
 
-/*
+
 struct Fps_s
 {
     Font font;
@@ -38,7 +38,7 @@ public:
     }
     void update()
     {
-        if (FPS.clock.getElapsedTime().asSeconds() >= 1.f) {
+        if (FPS.clock.getElapsedTime().asSeconds() >= 0.5f) {
             FPS.fps = FPS.Frame;
             FPS.Frame = 0;
             FPS.clock.restart();
@@ -52,7 +52,6 @@ public:
     }
 
 };
-*/
 
 
 class SoundManager
@@ -454,7 +453,7 @@ public:
 class GameState
 {
 public:
-//    Fps fps;
+    Fps fps;
     Dino dino;
     Ground ground;
     Obstacles obstacles;
@@ -466,7 +465,7 @@ public:
     Text gameOverText;
     Vector2f mousePos{ 0.f, 0.f };
 
-    GameState() : /*fps(),*/ dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager()
+    GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager()
     {
         gameOverFont.loadFromFile("rsrc/Fonts/Font.ttf");
         gameOverText.setFont(gameOverFont);
@@ -503,8 +502,9 @@ public:
             dino.update(deltaTime, obstacles.obstacles);
             clouds.updateClouds(deltaTime);
             scores.update();
+            fps.update();
         }
-//        fps.update();
+        fps.update();
     }
 
     void drawTo(RenderWindow& window)
@@ -523,7 +523,7 @@ public:
             window.draw(restartButton.restartButtonSprite);
         }
 
-//        fps.drawTo(window);
+        fps.drawTo(window);
     }
 
 };
@@ -557,16 +557,16 @@ int main() {
         window.draw(game.scores.previousScoreText);
         window.draw(game.scores.HIText);
         game.dino.drawBox(window);
+        game.fps.drawTo(window);
 
-        if (playerDead) {
-            window.draw(game.restartButton.restartButtonSprite);
+        if (playerDead)
+        {
             window.draw(game.gameOverText);
+            window.draw(game.restartButton.restartButtonSprite);
         }
 
-//        game.fps.drawTo(window);
         window.display();
     }
 
     return 0;
 }
-

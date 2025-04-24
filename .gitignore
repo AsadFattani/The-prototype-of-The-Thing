@@ -4,7 +4,8 @@
 # Ignore the DoNotChange.cpp file
 Dino.cpp
 Background.cpp
-# DoNotChange.cpp
+#DoNotChange.cpp
+#50%Code.cpp
 
 # Ignore the .vscode directory
 .vscode/
