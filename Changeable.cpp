@@ -124,6 +124,11 @@ public:
         groundSprite.setTextureRect(IntRect(0, 0, windowSize_x, windowSize_y));
     }
 
+    void drawTo(RenderWindow& window)
+    {
+        window.draw(groundSprite);
+    }
+
 };
 
 class Obstacle
@@ -173,7 +178,7 @@ public:
             animationClock.restart();
         }
 
-//        updateBox();
+        updateBox();
     }
 
     void drawTo(RenderWindow& window)
@@ -288,7 +293,7 @@ class Dino
 
     void update(Time& deltaTime, vector<Obstacle>& obstacles)
     {
-//        updateBox();
+        updateBox();
         dino.setScale(2.f,2.f);
         dinoPos = dino.getPosition();
         dinoBounds = dino.getGlobalBounds();
@@ -364,7 +369,12 @@ class Dino
         dino.setTextureRect(frames[0]);
     }
 
-/*
+    void drawTo(RenderWindow& window)
+    {
+        window.draw(dino);
+    }
+
+
     void updateBox()
     {
         Box.setSize(Vector2f(dinoBounds.width, dinoBounds.height));
@@ -378,7 +388,7 @@ class Dino
     {
         window.draw(Box);
     }
-*/
+
 };
 
 
@@ -445,6 +455,13 @@ public:
 
         previousScoreText.setString(to_string(previousScore));
         scores = 0;
+    }
+
+    void drawTo(RenderWindow& window)
+    {
+        window.draw(scoresText);
+        window.draw(previousScoreText);
+        window.draw(HIText);
     }
 
 };
@@ -569,6 +586,14 @@ public:
         fps.update();
     }
 
+    void drawTo(RenderWindow& window)
+    {
+        if(playerDead){
+        window.draw(gameOverText);
+        window.draw(restartButton.restartButtonSprite);
+        }
+    }
+
 };
 
 int main() {
@@ -604,14 +629,14 @@ int main() {
         }
 
         window.clear(Color::White);
-        game.clouds.drawTo(window);
-        window.draw(game.ground.groundSprite);
-        game.obstacles.drawTo(window);
-        window.draw(game.dino.dino);
-        window.draw(game.scores.scoresText);
-        window.draw(game.scores.previousScoreText);
-        window.draw(game.scores.HIText);
-        game.fps.drawTo(window);
+
+        game.clouds.drawTo(window); // Draw clouds first
+        game.ground.drawTo(window); // Draw ground
+        game.obstacles.drawTo(window); // Draw obstacles
+        game.dino.drawTo(window); // Draw dino
+        game.scores.drawTo(window); // Draw scores
+        game.fps.drawTo(window); // Draw FPS
+        game.drawTo(window); // Draw game over text and restart button if player is dead
 
         if (paused) {
             window.draw(pauseText); // Draw the pause text when paused
