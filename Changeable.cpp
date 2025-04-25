@@ -274,20 +274,30 @@ class Dino
         Time timeTracker;
         int animationCounter{ 0 };
         RectangleShape Box;
+        Text autoPlayText;
+        Font autoPlayFont;
 
         Dino(SoundManager& sm) : dino(), dinoTex(), timeTracker(), soundM(sm)
         {
-            float spriteWidth = 47;
-                float spriteHeight = 56;
-                if (dinoTex.loadFromFile("rsrc/Images/DinoWithDress.png")) {
-                    dino.setTexture(dinoTex);
-                    for (int i = 0; i < frames.size(); i++)
-                        frames[i] = IntRect(i * spriteWidth, 0, spriteWidth, spriteHeight);
-                    dino.setTextureRect(frames[0]);
-                    dinoPos = dino.getPosition();
+        float spriteWidth = 47;
+        float spriteHeight = 56;
+        if (dinoTex.loadFromFile("rsrc/Images/DinoWithDress.png")) {
+            dino.setTexture(dinoTex);
+            for (int i = 0; i < frames.size(); i++)
+                frames[i] = IntRect(i * spriteWidth, 0, spriteWidth, spriteHeight);
+
+            dino.setTextureRect(frames[0]);
+            dinoPos = dino.getPosition();
         }
         else {
             cout << "Error loading the Dino Texture" << endl;
+        }
+
+        // Set font and text for auto-play
+        if (autoPlayFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
+            autoPlayText.setFont(autoPlayFont);
+            autoPlayText.setCharacterSize(20);
+            autoPlayText.setFillColor(Color(83, 83, 83));
         }
     }
 
@@ -308,6 +318,7 @@ class Dino
                 playerDead = true;
 
         if (!playerDead) {
+            autoJump(obstacles);
             walk();
             if (Keyboard::isKeyPressed(Keyboard::Space) && dinoPos.y >= windowSize_y - 150.f) {
                 animationCounter = 0;
@@ -372,6 +383,7 @@ class Dino
     void drawTo(RenderWindow& window)
     {
         window.draw(dino);
+        window.draw(autoPlayText);
     }
 
 
@@ -388,6 +400,42 @@ class Dino
     {
         window.draw(Box);
     }
+
+    bool autoPlay = false;
+
+    void toggleAutoPlay()
+    {
+        autoPlay = !autoPlay;
+        if (autoPlay) {
+            autoPlayText.setString("AutoPlay: ON");
+            autoPlayText.setOrigin(autoPlayText.getLocalBounds().left + (autoPlayText.getLocalBounds().width / 2), autoPlayText.getLocalBounds().top + (autoPlayText.getLocalBounds().height / 2));
+            autoPlayText.setPosition(Vector2f(windowSize_x / 2, 25.f));
+        } else {
+            autoPlayText.setString("");
+        }
+    }
+
+    void autoJump(vector<Obstacle>& obstacles)
+        {
+            if (!autoPlay)
+                return;
+
+            for (auto& obs : obstacles)
+            {
+                float obsX = obs.obstacleSprite.getPosition().x;
+                float obsY = obs.obstacleSprite.getPosition().y;
+                float dinoX = dino.getPosition().x;
+
+                if (obsX > dinoX && obsX - dinoX < 100.f + (gameSpeed * 10.f) && dino.getPosition().y >= windowSize_y - 150.f && obsY >= groundOffset)
+                {
+                    animationCounter = 0;
+                    dinoMotion.y = -20.f;
+                    dino.setTextureRect(frames[2]);
+                    soundM.jumpSound.play();
+                    break;
+                }
+            }
+        }
 
 };
 
@@ -546,13 +594,19 @@ public:
 
     GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager()
     {
-        gameOverFont.loadFromFile("rsrc/Fonts/Font.ttf");
-        gameOverText.setFont(gameOverFont);
-        dino.dino.setPosition(Vector2f(windowSize_x / 2 - windowSize_x / 4, windowSize_y - 150.f));
-        gameOverText.setString("Game Over");
-        gameOverText.setPosition(Vector2f(restartButton.restartButtonSprite.getPosition().x - 100.f,
-            restartButton.restartButtonSprite.getPosition().y - 50));
-        gameOverText.setFillColor(Color(83, 83, 83));
+
+        // Load font and set up game over text
+        if(gameOverFont.loadFromFile("rsrc/Fonts/Font.ttf")){
+            gameOverText.setFont(gameOverFont);
+            dino.dino.setPosition(Vector2f(windowSize_x / 2 - windowSize_x / 4, windowSize_y - 150.f));
+            gameOverText.setString("Game Over");
+            gameOverText.setPosition(Vector2f(restartButton.restartButtonSprite.getPosition().x - 100.f,restartButton.restartButtonSprite.getPosition().y - 50));
+            gameOverText.setFillColor(Color(83, 83, 83));
+        }
+
+
+
+
     }
     void setMousePos(Vector2i p_mousePos)
     {
@@ -617,10 +671,11 @@ int main() {
         Event event;
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed)
-                window.close();
-            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape) {
+                window.close(); // Close the window
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
                 paused = !paused; // Toggle pause state
-            }
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::A) 
+                game.dino.toggleAutoPlay(); // Toggle auto-play state
         }
 
         if (!paused) { // Only update the game if not paused
@@ -637,6 +692,7 @@ int main() {
         game.scores.drawTo(window); // Draw scores
         game.fps.drawTo(window); // Draw FPS
         game.drawTo(window); // Draw game over text and restart button if player is dead
+        game.dino.drawBox(window); // Draw dino box
 
         if (paused) {
             window.draw(pauseText); // Draw the pause text when paused
