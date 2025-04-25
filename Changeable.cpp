@@ -250,7 +250,7 @@ public:
     {
         for (auto& obs : obstacles) {
             obs.drawTo(window);
-            obs.drawBox(window);
+//            obs.drawBox(window);
         }
     }
 
@@ -691,8 +691,8 @@ int main() {
         game.dino.drawTo(window); // Draw dino
         game.scores.drawTo(window); // Draw scores
         game.fps.drawTo(window); // Draw FPS
-        game.drawTo(window); // Draw game over text and restart button if player is dead
-        game.dino.drawBox(window); // Draw dino box
+        game.drawTo(window);
+//        game.dino.drawBox(window);
 
         if (paused) {
             window.draw(pauseText); // Draw the pause text when paused
