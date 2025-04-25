@@ -674,7 +674,7 @@ int main() {
                 window.close(); // Close the window
             if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
                 paused = !paused; // Toggle pause state
-            if (event.type == Event::KeyPressed && event.key.code == Keyboard::A) 
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::A && Keyboard::isKeyPressed(Keyboard::LControl)) 
                 game.dino.toggleAutoPlay(); // Toggle auto-play state
         }
 
