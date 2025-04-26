@@ -104,8 +104,9 @@ public:
         }
     }
 
-    void updateGround()
+    void updateGround(bool isPaused)
     {
+        if (isPaused) return;
         if (!playerDead) {
             if (offset > groundTexture.getSize().x - windowSize_x)
                 offset = 0;
@@ -221,8 +222,9 @@ public:
         obstacleTexture_3.loadFromFile("rsrc/Images/BirdSpriteSheet.png");
     }
 
-    void update(Time& deltaTime)
+    void update(Time& deltaTime, bool isPaused)
     {
+        if (isPaused) return;
         spawnTimer += deltaTime;
         if (spawnTimer.asSeconds() > 0.5f + gameSpeed / 8){
             randomNumber = (rand() % 3) + 1;
@@ -301,8 +303,9 @@ class Dino
         }
     }
 
-    void update(Time& deltaTime, vector<Obstacle>& obstacles)
+    void update(Time& deltaTime, vector<Obstacle>& obstacles, bool isPaused)
     {
+        if (isPaused) return;
         updateBox();
         dino.setScale(2.f,2.f);
         dinoPos = dino.getPosition();
@@ -552,8 +555,9 @@ public:
         cloud.setPosition(Vector2f(windowSize_x, windowSize_y / 2.f - 40.f));
     }
 
-    void updateClouds(Time& deltaTime)
+    void updateClouds(Time& deltaTime, bool isPaused)
     {
+        if (isPaused) return;
         currTime += deltaTime;
 
         if(!playerDead)
@@ -575,6 +579,106 @@ public:
     }
 };
 
+class DayNightCycle
+{
+public:
+    CircleShape sun;
+    CircleShape moon;
+    Clock cycleClock;
+    Time pausedTime; // Track the time when paused
+    float cycleDuration; // Total duration of a full cycle in seconds
+    vector<Color> gradientColors;
+
+    DayNightCycle() : pausedTime(Time::Zero), cycleDuration(30.f)
+    {
+        gradientColors = {
+            // Daytime shades
+            Color(255, 223, 186),       // Sunrise (soft orange)
+            Color(255, 165, 0),         // Morning (orange)
+            Color(255, 165, 0),         // Morning (orange)
+            Color(255, 255, 224),       // Noon (light yellow)
+            Color(255, 255, 224),       // Noon (light yellow)
+            Color(255, 140, 0),         // Sunset (deep orange)
+
+            // Nighttime shades
+            Color(25, 25, 112),         // Night (midnight blue)
+            Color(25, 25, 112),         // Night (midnight blue)
+            Color(0, 0, 0),             // Midnight (black)
+            Color(0, 0, 0),             // Midnight (black)
+            Color(25, 25, 112),         // Pre-dawn (midnight blue)
+            Color(25, 25, 112),         // Pre-dawn (midnight blue)
+            Color(255, 223, 186)        // Dawn (soft orange)
+        };
+
+        sun.setRadius(50.f); // Reduced radius
+        sun.setFillColor(Color::Yellow);
+        sun.setOrigin(sun.getRadius(), sun.getRadius());
+        sun.setPosition(windowSize_x / 2, windowSize_y / 6); // Start sun at the top of the screen
+
+        moon.setRadius(50.f); // Reduced radius
+        moon.setFillColor(Color(200, 200, 200));
+        moon.setOrigin(moon.getRadius(), moon.getRadius());
+        moon.setPosition(windowSize_x / 2, 5 * windowSize_y / 6); // Start moon at the bottom of the screen
+    }
+
+    void update(bool isPaused)
+    {
+        if (!isPaused) {
+            pausedTime += cycleClock.restart(); // Accumulate time when not paused
+        } else {
+            cycleClock.restart(); // Stop the clock to freeze movement
+        }
+
+        float elapsed = fmod(pausedTime.asSeconds(), cycleDuration); // Ensure infinite cycling
+        float angle = (elapsed / cycleDuration) * 360.f;
+
+        // Update sun and moon positions (adjust center slightly downward)
+        float rotationRadius = windowSize_x / 4; // Reduced radius for rotation
+        float centerY = windowSize_y / 2 + 100.f; // Move center slightly downward
+        sun.setPosition(windowSize_x / 2 + cos(angle * 3.14159f / 180.f) * rotationRadius,
+                        centerY - sin(angle * 3.14159f / 180.f) * rotationRadius);
+        moon.setPosition(windowSize_x / 2 - cos(angle * 3.14159f / 180.f) * rotationRadius,
+                         centerY + sin(angle * 3.14159f / 180.f) * rotationRadius);
+
+        // Hide one celestial body based on the angle
+        if (angle < 180.f) {
+            sun.setFillColor(Color(255, 255, 0, 255)); // Sun visible
+            moon.setFillColor(Color(200, 200, 200, 0)); // Moon invisible
+        } else {
+            sun.setFillColor(Color(255, 255, 0, 0)); // Sun invisible
+            moon.setFillColor(Color(200, 200, 200, 255)); // Moon visible
+        }
+    }
+
+    void reset()
+    {
+        pausedTime = Time::Zero; // Reset the time
+        cycleClock.restart(); // Restart the clock
+        sun.setPosition(windowSize_x / 2, windowSize_y / 6); // Reset sun position
+        moon.setPosition(windowSize_x / 2, 5 * windowSize_y / 6); // Reset moon position
+    }
+
+    Color getBackgroundColor()
+    {
+        float elapsed = pausedTime.asSeconds();
+        float t = fmod(elapsed / cycleDuration, 1.0f) * gradientColors.size(); // Ensure cycling within the array
+        int index = static_cast<int>(t) % gradientColors.size();
+        int nextIndex = (index + 1) % gradientColors.size();
+        float blendFactor = t - index;
+
+        // Smoothly blend between current and next color
+        return Color(
+            gradientColors[index].r * (1 - blendFactor) + gradientColors[nextIndex].r * blendFactor,
+            gradientColors[index].g * (1 - blendFactor) + gradientColors[nextIndex].g * blendFactor,
+            gradientColors[index].b * (1 - blendFactor) + gradientColors[nextIndex].b * blendFactor);
+    }
+
+    void drawTo(RenderWindow& window)
+    {
+        window.draw(sun);
+        window.draw(moon);
+    }
+};
 
 
 class GameState
@@ -591,8 +695,9 @@ public:
     Font gameOverFont;
     Text gameOverText;
     Vector2f mousePos{ 0.f, 0.f };
+    DayNightCycle dayNightCycle;
 
-    GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager()
+    GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager(), dayNightCycle()
     {
 
         // Load font and set up game over text
@@ -614,7 +719,7 @@ public:
         mousePos.y = p_mousePos.y;
     }
 
-    void update(Time deltaTime)
+    void update(Time deltaTime, bool isPaused)
     {
         restartButton.checkPressed = Mouse::isButtonPressed(Mouse::Left);
         if (playerDead && restartButton.restartButtonSpriteBounds.contains(mousePos) &&
@@ -625,26 +730,40 @@ public:
             dino.reset();
             soundManager.restartMusic();
             scores.reset();
+            dayNightCycle.reset(); // Reset day-night cycle
             playerDead = false;
             gameSpeed = 8;
         }
-        else
+        else if (!isPaused) // Only update game elements when not paused
         {
-            ground.updateGround();
-            obstacles.update(deltaTime);
-            dino.update(deltaTime, obstacles.obstacles);
-            clouds.updateClouds(deltaTime);
+            ground.updateGround(isPaused);
+            obstacles.update(deltaTime, isPaused);
+            dino.update(deltaTime, obstacles.obstacles, isPaused);
+            clouds.updateClouds(deltaTime, isPaused);
             scores.update();
             fps.update();
+            dayNightCycle.update(isPaused); // Update day-night cycle
         }
+        dayNightCycle.update(isPaused); // Pass the paused state to the day-night cycle
         fps.update();
     }
 
     void drawTo(RenderWindow& window)
     {
-        if(playerDead){
-        window.draw(gameOverText);
-        window.draw(restartButton.restartButtonSprite);
+        window.clear(dayNightCycle.getBackgroundColor()); // Set gradient background
+        dayNightCycle.drawTo(window); // Draw sun and moon (most behind layer)
+        clouds.drawTo(window); // Draw clouds
+        ground.drawTo(window); // Draw ground
+        obstacles.drawTo(window); // Draw obstacles
+        dino.drawTo(window); // Draw dino
+        scores.drawTo(window); // Draw scores
+        fps.drawTo(window); // Draw FPS
+        if (playerDead) {
+            window.draw(gameOverText);
+            window.draw(restartButton.restartButtonSprite);
+        }
+        if (paused) {
+            window.draw(pauseText); // Draw pause text above all other layers
         }
     }
 
@@ -678,26 +797,24 @@ int main() {
                 game.dino.toggleAutoPlay(); // Toggle auto-play state
         }
 
-        if (!paused) { // Only update the game if not paused
-            game.setMousePos(Mouse::getPosition(window));
-            game.update(deltaTime);
-        }
+        game.setMousePos(Mouse::getPosition(window));
+        game.update(deltaTime, paused);
 
         window.clear(Color::White);
+        game.drawTo(window); // Draw everything, including pause text if paused
 
-        game.clouds.drawTo(window); // Draw clouds first
-        game.ground.drawTo(window); // Draw ground
-        game.obstacles.drawTo(window); // Draw obstacles
-        game.dino.drawTo(window); // Draw dino
-        game.scores.drawTo(window); // Draw scores
-        game.fps.drawTo(window); // Draw FPS
-        game.drawTo(window);
-//        game.dino.drawBox(window);
 
+        // game.clouds.drawTo(window); // Draw clouds first
+        // game.ground.drawTo(window); // Draw ground
+        // game.obstacles.drawTo(window); // Draw obstacles
+        // game.dino.drawTo(window); // Draw dino
+        // game.scores.drawTo(window); // Draw scores
+        // game.fps.drawTo(window); // Draw FPS
+        // game.drawTo(window);
+        // game.dino.drawBox(window);
         if (paused) {
             window.draw(pauseText); // Draw the pause text when paused
         }
-
         window.display();
     }
 
