@@ -662,7 +662,7 @@ public:
     {
         float elapsed = pausedTime.asSeconds();
         float t = fmod(elapsed / cycleDuration, 1.0f) * gradientColors.size(); // Ensure cycling within the array
-        int index = static_cast<int>(t) % gradientColors.size();
+        int index = (int)(t) % gradientColors.size();
         int nextIndex = (index + 1) % gradientColors.size();
         float blendFactor = t - index;
 
