@@ -4,9 +4,11 @@
 #include <array>
 #include <vector>
 #include <random>
+#include <fstream>
 using namespace std;
 using namespace sf;
 
+const string highScores("highscore.txt");
 const int windowSize_x = 1000;
 const int windowSize_y = 500;
 const int groundOffset = windowSize_y - 150.f;
@@ -456,6 +458,7 @@ public:
     short scoresIndex{ 0 };
     short scoresDiff{ 0 };
     short scoresInital;
+    
 
     Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
     {
@@ -493,20 +496,42 @@ public:
                 gameSpeed += 1;
                 soundM.pointSound.play();
             }
-
+            ifstream file(highScores); 
+            int fileScore;
+            if (file >> fileScore) {
+                if (fileScore > previousScore) {
+                    previousScore = fileScore;
+                }
+            }
+            file.close();
             scoresText.setString(to_string(scores));
             previousScoreText.setString(to_string(previousScore));
         }
     }
 
     void reset()
-    {
-        if (scores > previousScore)
-            previousScore = scores;
+{
+    int allTimeHighScore;
+    ifstream file(highScores);
+    file >> allTimeHighScore;
+    file.close();
 
-        previousScoreText.setString(to_string(previousScore));
-        scores = 0;
+    if (scores > previousScore){
+        previousScore = scores;
+        if (scores > allTimeHighScore)
+        {
+            allTimeHighScore = scores;
+        }
     }
+
+    ofstream outFile(highScores);
+    outFile << allTimeHighScore;
+    outFile.close();
+
+    previousScoreText.setString(to_string(previousScore));
+    scores = 0;  
+}
+
 
     void drawTo(RenderWindow& window)
     {
