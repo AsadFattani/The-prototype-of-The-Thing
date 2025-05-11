@@ -561,7 +561,7 @@ public:
     }
 };
 
-
+/*
 class Clouds
 {
 public:
@@ -603,6 +603,7 @@ public:
         window.draw(cloud);
     }
 };
+*/
 
 class DayNightCycle
 {
@@ -726,7 +727,7 @@ public:
     Ground ground;
     Obstacles obstacles;
     Scores scores;
-    Clouds clouds;
+    //Clouds clouds;
     RestartButton restartButton;
     SoundManager soundManager;
     Font gameOverFont;
@@ -734,7 +735,7 @@ public:
     Vector2f mousePos{ 0.f, 0.f };
     DayNightCycle dayNightCycle;
 
-    GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), clouds(),gameOverFont(), gameOverText(), soundManager(), dayNightCycle()
+    GameState() : fps(), dino(soundManager), ground(), obstacles(), scores(soundManager), /*clouds(), */gameOverFont(), gameOverText(), soundManager(), dayNightCycle()
     {
 
         // Load font and set up game over text
@@ -776,7 +777,7 @@ public:
             ground.updateGround(isPaused);
             obstacles.update(deltaTime, isPaused);
             dino.update(deltaTime, obstacles.obstacles, isPaused);
-            clouds.updateClouds(deltaTime, isPaused);
+            //clouds.updateClouds(deltaTime, isPaused);
             scores.update();
             fps.update();
             dayNightCycle.update(isPaused); // Update day-night cycle
@@ -789,7 +790,7 @@ public:
     {
         window.clear(dayNightCycle.getBackgroundColor()); // Set gradient background
         dayNightCycle.drawTo(window); // Draw sun and moon (most behind layer)
-        clouds.drawTo(window); // Draw clouds
+        //clouds.drawTo(window); // Draw clouds
         ground.drawTo(window); // Draw ground
         obstacles.drawTo(window); // Draw obstacles
         dino.drawTo(window); // Draw dino
