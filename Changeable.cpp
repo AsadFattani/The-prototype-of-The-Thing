@@ -264,7 +264,102 @@ public:
     }
 };
     
+class Scores
+{
+public:
+    Text previousScoreText;
+    Text HIText;
+    Text scoresText;
+    Font scoresFont;
+    SoundManager& soundM;
+    short scores{ 0 };
+    short previousScore{ 0 };
+    short scoresIndex{ 0 };
+    short scoresDiff{ 0 };
+    short scoresInital;
+    
 
+    Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
+    {
+        if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
+            scoresText.setFont(scoresFont);
+            scoresText.setCharacterSize(15);
+            scoresText.setPosition(Vector2f(windowSize_x / 2 + windowSize_x / 4 + 185.f, scoresText.getCharacterSize() + 10.f));
+            scoresText.setFillColor(Color(83, 83, 83));
+
+            previousScoreText.setFont(scoresFont);
+            previousScoreText.setCharacterSize(15);
+            previousScoreText.setPosition(Vector2f(scoresText.getPosition().x - 100.f, scoresText.getPosition().y));
+            previousScoreText.setFillColor(Color(83, 83, 83));
+
+            HIText.setFont(scoresFont);
+            HIText.setCharacterSize(15);
+            HIText.setPosition(Vector2f(previousScoreText.getPosition().x - 50.f, previousScoreText.getPosition().y));
+            HIText.setFillColor(Color(83, 83, 83));
+        }
+        HIText.setString("HI");
+        scoresInital = 0;
+    }
+
+    void update()
+    {
+        if (!playerDead && !paused) { // Stop updating scores when paused
+            scoresIndex++;
+            if (scoresIndex >= 5) {
+                scoresIndex = 0;
+                scores++;
+            }
+            scoresDiff = scores - scoresInital;
+            if (scoresDiff > 100) {
+                scoresInital += 100;
+                gameSpeed += 1;
+                soundM.pointSound.play();
+            }
+            ifstream file(highScores); 
+            int fileScore;
+            if (file >> fileScore) {
+                if (fileScore > previousScore) {
+                    previousScore = fileScore;
+                }
+            }
+            file.close();
+            scoresText.setString(to_string(scores));
+            previousScoreText.setString(to_string(previousScore));
+        }
+    }
+
+    void reset()
+{
+    int allTimeHighScore;
+    ifstream file(highScores);
+    file >> allTimeHighScore;
+    file.close();
+
+    if (scores > previousScore){
+        previousScore = scores;
+        if (scores > allTimeHighScore)
+        {
+            allTimeHighScore = scores;
+        }
+    }
+
+    ofstream outFile(highScores);
+    outFile << allTimeHighScore;
+    outFile.close();
+
+    previousScoreText.setString(to_string(previousScore));
+    scores = 0;  
+}
+
+
+    void drawTo(RenderWindow& window)
+    {
+        window.draw(scoresText);
+        window.draw(previousScoreText);
+        window.draw(HIText);
+    }
+
+};
 class Dino
 {
     public:
@@ -305,7 +400,7 @@ class Dino
         }
     }
 
-    void update(Time& deltaTime, vector<Obstacle>& obstacles, bool isPaused)
+    void update(Time& deltaTime, vector<Obstacle>& obstacles, bool isPaused, Scores &scores)
     {
         if (isPaused) return;
         updateBox();
@@ -319,8 +414,22 @@ class Dino
         timeTracker += deltaTime;
 
         for (auto& obs : obstacles)
-            if (dinoBounds.intersects(obs.obstacleBounds))
+            if (dinoBounds.intersects(obs.obstacleBounds)){
                 playerDead = true;
+                ifstream infile(highScores); 
+                int fileScore;
+                if (infile >> fileScore) {
+                if (fileScore < scores.scores) {
+                    infile.close();
+                    ofstream outfile(highScores);
+                    outfile << scores.scores;
+                }
+            }
+            if (infile.is_open())
+            {
+                infile.close();
+            }
+            }
 
         if (!playerDead) {
             autoJump(obstacles);
@@ -445,102 +554,7 @@ class Dino
 };
 
 
-class Scores
-{
-public:
-    Text previousScoreText;
-    Text HIText;
-    Text scoresText;
-    Font scoresFont;
-    SoundManager& soundM;
-    short scores{ 0 };
-    short previousScore{ 0 };
-    short scoresIndex{ 0 };
-    short scoresDiff{ 0 };
-    short scoresInital;
-    
 
-    Scores(SoundManager& sm) : scoresFont(), scoresText(), previousScoreText(), scoresInital(), soundM(sm)
-    {
-        if (scoresFont.loadFromFile("rsrc/Fonts/Font.ttf")) {
-            scoresText.setFont(scoresFont);
-            scoresText.setCharacterSize(15);
-            scoresText.setPosition(Vector2f(windowSize_x / 2 + windowSize_x / 4 + 185.f, scoresText.getCharacterSize() + 10.f));
-            scoresText.setFillColor(Color(83, 83, 83));
-
-            previousScoreText.setFont(scoresFont);
-            previousScoreText.setCharacterSize(15);
-            previousScoreText.setPosition(Vector2f(scoresText.getPosition().x - 100.f, scoresText.getPosition().y));
-            previousScoreText.setFillColor(Color(83, 83, 83));
-
-            HIText.setFont(scoresFont);
-            HIText.setCharacterSize(15);
-            HIText.setPosition(Vector2f(previousScoreText.getPosition().x - 50.f, previousScoreText.getPosition().y));
-            HIText.setFillColor(Color(83, 83, 83));
-        }
-        HIText.setString("HI");
-        scoresInital = 0;
-    }
-
-    void update()
-    {
-        if (!playerDead && !paused) { // Stop updating scores when paused
-            scoresIndex++;
-            if (scoresIndex >= 5) {
-                scoresIndex = 0;
-                scores++;
-            }
-            scoresDiff = scores - scoresInital;
-            if (scoresDiff > 100) {
-                scoresInital += 100;
-                gameSpeed += 1;
-                soundM.pointSound.play();
-            }
-            ifstream file(highScores); 
-            int fileScore;
-            if (file >> fileScore) {
-                if (fileScore > previousScore) {
-                    previousScore = fileScore;
-                }
-            }
-            file.close();
-            scoresText.setString(to_string(scores));
-            previousScoreText.setString(to_string(previousScore));
-        }
-    }
-
-    void reset()
-{
-    int allTimeHighScore;
-    ifstream file(highScores);
-    file >> allTimeHighScore;
-    file.close();
-
-    if (scores > previousScore){
-        previousScore = scores;
-        if (scores > allTimeHighScore)
-        {
-            allTimeHighScore = scores;
-        }
-    }
-
-    ofstream outFile(highScores);
-    outFile << allTimeHighScore;
-    outFile.close();
-
-    previousScoreText.setString(to_string(previousScore));
-    scores = 0;  
-}
-
-
-    void drawTo(RenderWindow& window)
-    {
-        window.draw(scoresText);
-        window.draw(previousScoreText);
-        window.draw(HIText);
-    }
-
-};
 
 class RestartButton
 {
@@ -776,7 +790,7 @@ public:
         {
             ground.updateGround(isPaused);
             obstacles.update(deltaTime, isPaused);
-            dino.update(deltaTime, obstacles.obstacles, isPaused);
+            dino.update(deltaTime, obstacles.obstacles, isPaused,scores);
             //clouds.updateClouds(deltaTime, isPaused);
             scores.update();
             fps.update();
