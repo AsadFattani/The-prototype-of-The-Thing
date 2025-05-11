@@ -607,103 +607,115 @@ public:
 class DayNightCycle
 {
 public:
-    CircleShape sun;
-    CircleShape moon;
+    Sprite sunSprite;
+    Sprite moonSprite;
+    Texture sunTexture;
+    Texture moonTexture;
+    CircleShape centerMarker;
+
     Clock cycleClock;
-    Time pausedTime; // Track the time when paused
-    float cycleDuration; // Total duration of a full cycle in seconds
+    Time pausedTime;
+    float cycleDuration;
     vector<Color> gradientColors;
 
     DayNightCycle() : pausedTime(Time::Zero), cycleDuration(30.f)
     {
+        //For center visualization
+        float markerRadius = 5.f;
+        centerMarker.setRadius(markerRadius);
+        centerMarker.setFillColor(Color::Red);
+        centerMarker.setOrigin(markerRadius, markerRadius); // center the circle
+        centerMarker.setPosition(windowSize_x / 2, windowSize_y + 100.f);
+
+        // Load textures
+        if (!sunTexture.loadFromFile("rsrc/Images/Sun.png"))
+            throw runtime_error("Could not load sun texture!");
+        if (!moonTexture.loadFromFile("rsrc/Images/Moon.png"))
+            throw runtime_error("Could not load moon texture!");
+
+        // Assign textures to sprites
+        sunSprite.setTexture(sunTexture);
+        moonSprite.setTexture(moonTexture);
+
+        // Set origins to center for circular movement
+        sunSprite.setOrigin(sunTexture.getSize().x / 2.f, sunTexture.getSize().y / 2.f);
+        moonSprite.setOrigin(moonTexture.getSize().x / 2.f, moonTexture.getSize().y / 2.f);
+
+        // Optional scaling (adjust as needed)
+        sunSprite.setScale(1.f, 1.f);
+        moonSprite.setScale(1.f, 1.f);
+
+        // Color gradient for background
         gradientColors = {
-            // Daytime shades
-            Color(255, 223, 186),       // Sunrise (soft orange)
-            Color(255, 165, 0),         // Morning (orange)
-            Color(255, 165, 0),         // Morning (orange)
-            Color(255, 255, 224),       // Noon (light yellow)
-            Color(255, 255, 224),       // Noon (light yellow)
-            Color(255, 140, 0),         // Sunset (deep orange)
-
-            // Nighttime shades
-            Color(25, 25, 112),         // Night (midnight blue)
-            Color(25, 25, 112),         // Night (midnight blue)
-            Color(0, 0, 0),             // Midnight (black)
-            Color(0, 0, 0),             // Midnight (black)
-            Color(25, 25, 112),         // Pre-dawn (midnight blue)
-            Color(25, 25, 112),         // Pre-dawn (midnight blue)
-            Color(255, 223, 186)        // Dawn (soft orange)
+            Color(255, 223, 186), Color(255, 165, 0), Color(255, 165, 0),
+            Color(255, 255, 224), Color(255, 255, 224), Color(255, 140, 0),
+            Color(25, 25, 112),   Color(25, 25, 112),  Color(0, 0, 0),
+            Color(0, 0, 0),       Color(25, 25, 112),  Color(25, 25, 112),
+            Color(255, 223, 186)
         };
-
-        sun.setRadius(50.f); // Reduced radius
-        sun.setFillColor(Color::Yellow);
-        sun.setOrigin(sun.getRadius(), sun.getRadius());
-        sun.setPosition(windowSize_x / 2, windowSize_y / 6); // Start sun at the top of the screen
-
-        moon.setRadius(50.f); // Reduced radius
-        moon.setFillColor(Color(200, 200, 200));
-        moon.setOrigin(moon.getRadius(), moon.getRadius());
-        moon.setPosition(windowSize_x / 2, 5 * windowSize_y / 6); // Start moon at the bottom of the screen
     }
 
     void update(bool isPaused)
     {
-        if (!isPaused) {
-            pausedTime += cycleClock.restart(); // Accumulate time when not paused
-        } else {
-            cycleClock.restart(); // Stop the clock to freeze movement
-        }
+        if (!isPaused)
+            pausedTime += cycleClock.restart();
+        else
+            cycleClock.restart();
 
-        float elapsed = fmod(pausedTime.asSeconds(), cycleDuration); // Ensure infinite cycling
+        float elapsed = fmod(pausedTime.asSeconds(), cycleDuration);
         float angle = (elapsed / cycleDuration) * 360.f;
 
-        // Update sun and moon positions (adjust center slightly downward)
-        float rotationRadius = windowSize_x / 4; // Reduced radius for rotation
-        float centerY = windowSize_y / 2 + 100.f; // Move center slightly downward
-        sun.setPosition(windowSize_x / 2 + cos(angle * 3.14159f / 180.f) * rotationRadius,
-                        centerY - sin(angle * 3.14159f / 180.f) * rotationRadius);
-        moon.setPosition(windowSize_x / 2 - cos(angle * 3.14159f / 180.f) * rotationRadius,
-                         centerY + sin(angle * 3.14159f / 180.f) * rotationRadius);
+        float radiusX = 450.f;
+        float radiusY = 400.f;
+        float centerX = windowSize_x / 2.f;
+        float centerY = windowSize_y + 100.f;
+        float rad = angle * 3.14159f / 180.f;
 
-        // Hide one celestial body based on the angle
+        sunSprite.setPosition(centerX + cos(rad) * radiusX,
+                              centerY - sin(rad) * radiusY);
+
+        moonSprite.setPosition(centerX - cos(rad) * radiusX,
+                               centerY + sin(rad) * radiusY);
+
+        // Toggle visibility using alpha
         if (angle < 180.f) {
-            sun.setFillColor(Color(255, 255, 0, 255)); // Sun visible
-            moon.setFillColor(Color(200, 200, 200, 0)); // Moon invisible
+            sunSprite.setColor(Color(255, 255, 255, 255));
+            moonSprite.setColor(Color(255, 255, 255, 0));
         } else {
-            sun.setFillColor(Color(255, 255, 0, 0)); // Sun invisible
-            moon.setFillColor(Color(200, 200, 200, 255)); // Moon visible
+            sunSprite.setColor(Color(255, 255, 255, 0));
+            moonSprite.setColor(Color(255, 255, 255, 255));
         }
     }
 
     void reset()
     {
-        pausedTime = Time::Zero; // Reset the time
-        cycleClock.restart(); // Restart the clock
-        sun.setPosition(windowSize_x / 2, windowSize_y / 6); // Reset sun position
-        moon.setPosition(windowSize_x / 2, 5 * windowSize_y / 6); // Reset moon position
+        pausedTime = Time::Zero;
+        cycleClock.restart();
     }
 
     Color getBackgroundColor()
     {
         float elapsed = pausedTime.asSeconds();
-        float t = fmod(elapsed / cycleDuration, 1.0f) * gradientColors.size(); // Ensure cycling within the array
-        int index = (int)(t) % gradientColors.size();
+        float t = fmod(elapsed / cycleDuration, 1.0f) * gradientColors.size();
+        int index = static_cast<int>(t) % gradientColors.size();
         int nextIndex = (index + 1) % gradientColors.size();
         float blendFactor = t - index;
 
-        // Smoothly blend between current and next color
         return Color(
             gradientColors[index].r * (1 - blendFactor) + gradientColors[nextIndex].r * blendFactor,
             gradientColors[index].g * (1 - blendFactor) + gradientColors[nextIndex].g * blendFactor,
-            gradientColors[index].b * (1 - blendFactor) + gradientColors[nextIndex].b * blendFactor);
+            gradientColors[index].b * (1 - blendFactor) + gradientColors[nextIndex].b * blendFactor
+        );
     }
 
     void drawTo(RenderWindow& window)
     {
-        window.draw(sun);
-        window.draw(moon);
+        window.draw(centerMarker);
+        window.draw(sunSprite);
+        window.draw(moonSprite);
     }
 };
+
 
 
 class GameState
