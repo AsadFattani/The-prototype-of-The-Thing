@@ -1,4 +1,10 @@
-# 🦖 CanyonSkull-OS (Dino Runner Clone)
+# 🦖 Dino Runner Game
+
+## 👥 Team 
+
+- 🔗 Omer Shahid — https://github.com/CanyonSkull-OS 
+- 🔗 Asad Imran — https://github.com/AsadFattani  
+- 🔗 Muhammad Affan Rasheed — https://github.com/affan-afk 
 
 A C++ SFML-based endless runner game inspired by Google Chrome Dino, featuring:
 
